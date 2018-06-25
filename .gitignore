@@ -1,0 +1,55 @@
+# Do NOT ignore these...
+!/.gitignore
+
+# dzil builds (ignore both the directories and their contents)
+/.latest
+/.latest/
+/.build/
+/.build/
+
+# Prepared distributions
+/Banal-Mini-Utils-*
+/Banal-Mini-Utils-*/
+/Banal-Mini-Utils-*.tar.gz
+
+# configuration for 'ack' (modern grep command equivalent)
+/.ackrc
+
+# Compressed Archives directly in project directory
+/*.gz
+/*.zip
+
+# Distribution archive
+/dist/
+
+# Generated files
+.last_cover_stats
+/MYMETA.*
+*.o
+*.pm.tdy
+*.bs
+
+# ExtUitls::MakeMaker
+/blib/
+/_eumm/
+/Makefile
+/Makefile.old
+/MANIFEST.bak
+/pm_to_blib
+/_build_params
+
+# Error output (during builds & testing)
+.dzil.out
+/test*.out
+
+
+# Devel::Cover
+cover_db/
+
+# Devel::NYTProf
+nytprof.out
+
+# Module::Build
+_build/
+Build
+Build.bat
