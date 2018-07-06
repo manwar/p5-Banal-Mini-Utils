@@ -2,3 +2,4 @@ Revision history for 'Banal-Mini-Utils'
 
 {{$NEXT}}
             - Initial release.
+            - Created a separate distribution package for these modules that used to reside in <Dist-Zilla-Plugin-Bundle-Author-TABULO> 

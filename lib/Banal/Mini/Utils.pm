@@ -8,22 +8,23 @@ package Banal::Mini::Utils;
 # ABSTRACT: Provide several MUNGER functions that may be use in conjunction with C<MooseX::MungeHas>.
 # KEYWORDS: Munge Has has MungeHas MooseX::MungeHas Moose MooseX Moo MooX
 
+our $VERSION = '0.001';
+# AUTHORITY
 
 use Carp                qw(croak);
 use Scalar::Util        qw(blessed  refaddr reftype);
-use List::Util 1.45     qw(any none pairs uniq);
+use List::Util 1.45     qw(any first none pairs uniq);
 use List::MoreUtils     qw(arrayify firstres listcmp);
 use overload;             # TAU : Required by flatten() and hence arrayify() routines copied from List::MoreUtils;
 
 
-# Data::Printer  exports the 'p'  (pretty print) subroutine,
-# which outputs to STDERR by default.
-use Data::Printer;  # During development only. TODO: comment this line out later.
+
+use Data::Printer       qw(p np);  # During development only. TODO: comment this line out later.
 
 use namespace::autoclean;
 
 
-use parent qw(Exporter::Tiny);
+use Exporter::Shiny;
 use vars qw(@EXPORT_OK);
 BEGIN {
    @EXPORT_OK = qw(
@@ -33,12 +34,21 @@ BEGIN {
     hash_access
     hash_lookup
     hash_lookup_staged
+
+    inverse_dict
+    inverse_mapping
+
     maybe
+    maybe_kv
     peek
 
     tidy_arrayify
     first_viable
     invoke_first_existing_method
+
+    affixed
+    prefixed
+    suffixed
 
     sanitize_env_var_name
     sanitize_subroutine_name
@@ -89,6 +99,23 @@ sub msg(@) {  # Message text builder to be used in error output (warn, die, ...)
 # STRING/TEXT processing functions
 #..........................................................
 
+sub prefixed ($@)  {
+  my %opts = %{ ref ($_[0]) eq 'HASH' ? shift : +{ prefix => shift} };
+  affixed(\%opts, @_ )
+}
+
+sub suffixed ($@)  {
+  my %opts = %{ ref ($_[0]) eq 'HASH' ? shift : +{ suffix => shift} };
+  affixed(\%opts, @_ )
+}
+
+sub affixed ($@)  {
+    my %opts = %{ ref ($_[0]) eq 'HASH' ? shift : +{} };
+    my $pfx  = exists $opts{prefix} ? ( $opts{prefix} // '') : '';
+    my $sfx  = exists $opts{suffix} ? ( $opts{suffix} // '') : '';
+    map {; $pfx . $_ . $sfx } @_
+}
+
 #&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 sub sanitize_env_var_name    (;$) { &sanitize_identifier_name  }
 sub sanitize_subroutine_name (;$) { &sanitize_identifier_name  }
@@ -109,29 +136,37 @@ sub sanitize_identifier_name (;$) {
 #&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 sub peek     {
 #&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-  my ($h, $keys, $default)   = @_;
+  my ($h, $keys)   = @_;
   my @keys = tidy_arrayify($keys);
   my $v;
 
   foreach my $key (@keys) {
     $v = exists $h->{$key} ? $h->{$key} : undef;
-    last if defined($v);
+    return $v if defined($v);
   }
 
-  $v // $default;
+  # Allow falling back to a set of defaults
+  # In scalar context, the first one defined wins.
+  # In list context, we return a list that contains all of the defined results
+  wantarray ? ( grep { defined } @_ ) : first { defined } @_;
 }
 
-# accumulate has entries, given a set of ket value pairs.
+
+# accumulate hash entries, given a set of ket value pairs.
 # The result will only include those pairs where both the key
 # and the value are 'defined'.
-sub maybe {
+sub maybe     { &maybe_kv }
+sub maybe_kv {
   my @r;  # result is accumulated in an array (instead of a hash), so that we can use 'push'
+  push @r, ( shift // () )  if (@_ % 2);  # This is how we deal with an odd number of args (including a single arg)
+
   foreach my $pair ( pairs @_ ) {
     my ( $key, $value ) = @$pair;
       push @r, ($key => $value) if defined($key) && defined ($value);
   }
   wantarray ? (@r) : +{@r}
 }
+
 
 #######################################
 sub hash_access {
@@ -145,6 +180,33 @@ sub hash_access {
     $node = $node->{$k};
   }
   $node
+}
+
+#######################################
+sub inverse_mapping  {
+#######################################
+  my  @k  = tidy_arrayify (shift);
+  my  @v  = tidy_arrayify (@_);
+  my  @res;
+
+  foreach my $v (@v) {
+    do { push @res, ($v => $_) } for @k;
+  }
+  return wantarray ? (@res) : +{ @res };
+}
+
+########################################
+sub inverse_dict {
+########################################
+  my  %h;
+      %h = (%h, %{; shift } ) while ( ref($_[0]) eq 'HASH');
+      %h = (%h, @_);
+  my %res;
+
+  while (my ($k, $v) = each %h) {
+    %res = (%res, inverse_mapping($k, $v));
+  }
+  wantarray ? (%res) : \%res
 }
 
 
@@ -203,10 +265,10 @@ SOURCE :
 KEY :
     foreach my $key (@mkeys) {
       next  KEY unless defined $key;
-      say STDERR "     Hash lookup for key '$key' in hash '$h' ..."    if $debug;
+#      say STDERR "     Hash lookup for key '$key' in hash '$h' ..."    if $debug;
       next  KEY unless exists $h->{$key};
       $res = $h->{$key};
-      say STDERR "     Value found for key '$key'  => : '$res'\n"     if $debug;
+#      say STDERR "     Value found for key '$key'  => : '$res'\n"     if $debug;
       last  SOURCE if defined $res;
     }
   }

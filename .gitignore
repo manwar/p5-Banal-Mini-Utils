@@ -5,7 +5,6 @@
 /.latest
 /.latest/
 /.build/
-/.build/
 
 # Prepared distributions
 /Banal-Mini-Utils-*
@@ -19,8 +18,8 @@
 /*.gz
 /*.zip
 
-# Distribution archive
-/dist/
+## Distribution archive
+/.distros/
 
 # Generated files
 .last_cover_stats
@@ -39,8 +38,13 @@
 /_build_params
 
 # Error output (during builds & testing)
-.dzil.out
-/test*.out
+.dzil.err*
+.dzil.out*
+.dzil.std*
+/test*.err*
+/test*.out*
+/test*.std*
+
 
 
 # Devel::Cover
