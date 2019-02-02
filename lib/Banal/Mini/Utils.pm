@@ -8,7 +8,7 @@ package Banal::Mini::Utils;
 # ABSTRACT: Provide several MUNGER functions that may be use in conjunction with C<MooseX::MungeHas>.
 # KEYWORDS: Munge Has has MungeHas MooseX::MungeHas Moose MooseX Moo MooX
 
-our $VERSION = '0.001';
+our $VERSION = '0.003';
 # AUTHORITY
 
 use Carp                qw(croak);
